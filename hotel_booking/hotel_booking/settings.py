@@ -29,10 +29,16 @@ ALLOWED_HOSTS = []
 
 #JWT Auth
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",  # 👈 ADD
+        "rest_framework.authentication.BasicAuthentication",    # 👈 ADD
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
+
 
 # Application definition
 

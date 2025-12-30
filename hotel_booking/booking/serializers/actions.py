@@ -48,6 +48,21 @@ class BookingCancelSerializer(serializers.Serializer):
     def validate(self, attrs):
         booking = self.instance
 
+        if booking.status == "CHECKED_IN":
+            raise serializers.ValidationError(
+                "Cannot cancel after check-in."
+            )
+
+        if booking.status == "CHECKED_OUT":
+            raise serializers.ValidationError(
+                "Completed bookings cannot be cancelled."
+            )
+
+        if booking.status == "CANCELLED":
+            raise serializers.ValidationError(
+                "Booking is already cancelled."
+            )
+
         if booking.status != "BOOKED":
             raise serializers.ValidationError(
                 "Only booked reservations can be cancelled."

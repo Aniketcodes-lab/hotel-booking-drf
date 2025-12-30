@@ -20,6 +20,7 @@ from booking.serializers.actions import (
     BookingCheckOutSerializer,
     BookingCancelSerializer,
 )
+from rest_framework import status
 
 class AvailableRoomsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -66,7 +67,6 @@ class BookingCheckInView(APIView):
     def post(self, request, pk):
         booking = get_object_or_404(Booking, pk=pk, user=request.user)
         serializer = BookingCheckInSerializer(instance=booking)
-        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"status": booking.status})
 
@@ -76,7 +76,6 @@ class BookingCheckOutView(APIView):
     def post(self, request, pk):
         booking = get_object_or_404(Booking, pk=pk, user=request.user)
         serializer = BookingCheckOutSerializer(instance=booking)
-        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"status": booking.status})
 
@@ -84,8 +83,21 @@ class BookingCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        booking = get_object_or_404(Booking, pk=pk, user=request.user)
-        serializer = BookingCancelSerializer(instance=booking)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"status": booking.status})
+        booking = Booking.objects.get(pk=pk, user=request.user)
+
+        # 🔐 HARD BLOCK – this is the key fix
+        if booking.status != "BOOKED":
+            return Response(
+                {
+                    "error": "Only bookings in BOOKED state can be cancelled."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        booking.status = "CANCELLED"
+        booking.save()
+
+        return Response(
+            {"status": "CANCELLED"},
+            status=status.HTTP_200_OK,
+        )
